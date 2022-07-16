@@ -3,4 +3,4 @@ Reimplementation of BashNN (https://github.com/avada-z/BashNN) algorithm but wit
 
 Compilation:
 
-g++ train.cpp -std=c++20 -pthread -o trainbet
+g++ train.cpp -std=c++20 -pthread -o train
