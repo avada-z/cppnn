@@ -5,6 +5,7 @@
 #include <regex>
 #include <vector>
 #include <bits/stdc++.h>
+#include <thread>
 namespace fs = std::filesystem;
 using namespace std;
 int neur[4095];
@@ -15,6 +16,7 @@ int filenum=0;
 string path;
 bool READED=false;
 string modelname="test.model";
+thread threads[63] = {};
 void getfiles()
 {
     for (const auto & entry : fs::directory_iterator(path))
@@ -93,21 +95,19 @@ void readpix()
         i++;
     }
 }
-void sumvalues()
-{   
-    pixsum=0;
-    for(int i=0; i<4096; i++)
+void summt(int start, int end)
+{
+    for(int i=start; i<end; i++)
     {   
         if(pix[i]==1)
         {
             pixsum=pixsum+neur[i];
-            cout<<pixsum<<endl;
         }
     }
 }
-void punishmentdown()
+void pundownmt(int start, int end)
 {
-    for(int i=0; i<4096; i++)
+    for(int i=start; i<end; i++)
     {
         if(pix[i]==1)
         {
@@ -115,9 +115,9 @@ void punishmentdown()
         }
     }
 }
-void punishmentup()
+void punupmt(int start, int end)
 {
-    for(int i=0; i<4096; i++)
+    for(int i=start; i<end; i++)
     {
         if(pix[i]==1)
         {
@@ -138,24 +138,36 @@ void savemodel()
 void verdict(string filename)
 {   
     int activator=5000;
+    int j=0;
     string jpg=".jpg";
     string png=".png";
     cout << filename << " rating is " << pixsum << endl;
     if(pixsum>=activator && strstr(filename.c_str(),jpg.c_str()))
     {
         cout << "running punishment down" << endl;
-        punishmentdown();
+        for(int i=0; i+64<=4096; i+=64)
+        {
+        threads[j] = thread(pundownmt, i, i+64);
+        threads[j].join();
+        j++;
+        }
     }
     if(pixsum<activator && strstr(filename.c_str(),png.c_str()))
     {
         cout << "running punishment up" << endl;
-        punishmentup();
+        for(int i=0; i+64<=4096; i+=64)
+        {
+        threads[j] = thread(punupmt, i, i+64);
+        threads[j].join();
+        j++;
+        }
     }
 }
 void train()
 {
     int cycles=0;
     int fith=0;
+    int j=0;
     cout <<"How many cycles perform?: ";
     cin >> cycles;
     cout << "Saving model every 500 images" << endl;
@@ -176,7 +188,14 @@ void train()
             }
             fith++;
             readpix();
-            sumvalues();
+            pixsum=0;
+            j=0;
+            for(int i=0; i+64<=4096; i+=64)
+            {
+                threads[j] = thread(summt, i, i+64);
+                threads[j].join();
+                j++;
+            }
             cout << "Processing image " << fith << "/500 before saving..." << endl;
             verdict(filenames[i]);
         }
