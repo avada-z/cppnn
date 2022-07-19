@@ -6,6 +6,7 @@
 #include <vector>
 #include <bits/stdc++.h>
 #include <thread>
+#include <opencv2/opencv.hpp>
 #include <mutex>
 namespace fs = std::filesystem;
 using namespace std;
@@ -29,60 +30,35 @@ void getfiles()
 }
 void split(const string file)
 {
-    int pixnum=0;
-    string line, foo, bar, threshold="convert ";
-    threshold=threshold+file+" -threshold 30% " + file;
-    system(threshold.c_str());
-    threshold="convert " + file +" sparse-color: > img_temp.txt";
-    system(threshold.c_str());
-    ifstream image("img_temp.txt");
-    ofstream out("img_temp2.txt");
-    while(image >> line)
-    {
-        for (int i = 0; i < line.size(); i++)
+    int numval=0;
+    cout << file << endl;
+    cv::Mat img = cv::imread(file,0);
+    for(int i=0; i<img.rows; i++)
+        for(int j=0; j<img.cols; j++)
         {
-            if (line[i] == ' ') 
+            if((int) img.at<uchar>(i,j)==255)
             {
-                line[i] = '\n';
+                pix[numval]=1;
+                numval++;
             }
-            if (line[i] == ',')
+            else if((int) img.at<uchar>(i,j)==254)
             {
-                line[i] = ' ';
+                pix[numval]=1;
+                numval++;
+            }
+            else
+            {
+                pix[numval]=0;
+                numval++;
             }
         }
-        out<<line<<endl; 
-    }
-    out.close();
-    ifstream image2("img_temp2.txt");
-    while(image2 >> line)
-    {   
-        stringstream X(line);
-        while (getline(X, foo, ' '))
-        {  
-            if(foo=="gray(255)")
-            {
-                pix[pixnum] = 1;
-                pixnum++;
-            }
-            else if(foo=="gray(254)")
-            {
-                pix[pixnum] = 1;
-                pixnum++;
-            }
-            else if(foo=="gray(0)")
-            {
-                pix[pixnum] = 0;
-                pixnum++;
-            }
-        }  
-    }
 }
 void blankmodel()
 {
     ofstream model(modelname);
     for(int i=0; i<4096; i++)
     {
-        model<<"0"<<endl;
+        model<<"0\n";
     }
     model.close();
 }
@@ -135,10 +111,10 @@ void savemodel()
     ofstream modelout(modelname);
     for(int i=0; i<4096; i++)
     {
-        modelout<<neur[i]<<endl;
+        modelout<<neur[i]<<"\n";
     }
     modelout.close();
-    cout << "Model saved" << endl;
+    cout << "Model saved" << "\n";
 
 }
 void verdict(string filename)
@@ -148,7 +124,7 @@ void verdict(string filename)
     cout << filename << " rating is " << pixsum << endl;
     if(pixsum>=activator && strstr(filename.c_str(),jpg.c_str()))
     {
-        cout << "Running punishment down" << endl;
+        cout << "Running punishment down\n";
         thread pdown1(pundownmt, 0, 512);
         thread pdown2(pundownmt, 512, 1024);
         thread pdown3(pundownmt, 1024, 1536);
@@ -168,7 +144,7 @@ void verdict(string filename)
     }
     if(pixsum<activator && strstr(filename.c_str(),png.c_str()))
     {
-        cout << "Running punishment up" << endl;
+        cout << "Running punishment up\n";
         thread pup1(punupmt, 0, 512);
         thread pup2(punupmt, 512, 1024);
         thread pup3(punupmt, 1024, 1536);
@@ -192,7 +168,7 @@ void train()
     int cycles=0, fith=0;
     cout <<"How many cycles perform?: ";
     cin >> cycles;
-    cout << "Saving model every 500 images" << endl;
+    cout << "Saving model every 512 images\n";
     getfiles();
     for (int j=0; j< cycles; j++)
     {
@@ -203,7 +179,7 @@ void train()
             {
                 readmodel();
             }
-            if(fith==500)
+            if(fith==512)
             {
                 savemodel();
                 fith=0;
@@ -226,7 +202,7 @@ void train()
             thread6.join();
             thread7.join();
             thread8.join();
-            cout << "Processing image " << filenames[i] << " " << fith << "/500 before saving..." << endl;
+            cout << "Processing image " << filenames[i] << " " << fith << "/512 before saving...\n";
             verdict(filenames[i]);
         }
     }
