@@ -5,8 +5,6 @@ Reimplementation of [BashNN](https://github.com/avada-z/BashNN) algorithm but wi
 ```sh
 g++ train.cpp -std=c++20 -pthread -o train -Ofast -fomit-frame-pointer -flto -march=native -mtune=native -I /path/to/opencv4/ -lopencv_core -lopencv_imgcodecs
 ```
-### Requirements:
-[ImageMagick](https://github.com/ImageMagick/ImageMagick) installed
 
 ### Data Preparation:
 Run:
